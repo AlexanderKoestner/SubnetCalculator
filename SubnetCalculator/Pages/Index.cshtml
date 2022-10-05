@@ -1,0 +1,62 @@
+﻿@page
+@using SubnetCalculator.Pages.Model;
+@model IndexModel
+@{
+    ViewData["Title"] = "Visual Subnet Calculator";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<form method="post">
+    <div class="input-group-sm mb-3">
+        <input class="number" type="text" class="form-control" data-val="true" asp-for="IpAdressFirstByte">
+        <text>@Model.EmptyStringDot</text>
+        <input class="number" type="text" class="form-control" data-val="true" asp-for="IpAdressSecondByte">
+        <text>@Model.EmptyStringDot</text>
+        <input class="number" type="text" class="form-control" data-val="true" asp-for="IpAdressThirdByte">
+        <text>@Model.EmptyStringDot</text>
+        <input class="number" type="text" class="form-control" data-val="true" asp-for="IpAdressFourthByte">
+        <text>@Model.EmptyStringDash</text>
+        <input type="number" asp-for="IpAdressSuffix" data-val="true">
+        <button class="btn btn-outline-secondary" type="submit">Create</button>
+    </div>
+</form>
+
+
+<table class="table" border="1" cellpadding="10">
+    <tbody>
+        <tr>
+            <td>Subnet Adress</td>
+            <td>Subnet Mask</td>
+            <td>Range of Adresses</td>
+            <td>Usable IPs</td>
+            <td>Hosts</td>
+            <td>Divide</td>
+            <td>Join</td>
+        </tr>
+    </tbody>
+</table>
+
+@{
+    foreach(Subnet value in Model.Subnets)
+    {
+        <table class="table" border="1" cellpadding="10">
+            <tbody>
+                <tr>
+                    <td>@value.SubnetID</td>
+                    <td>@value.SubnetMask</td>
+                    <td>@value.RangeOfAdresses</td>
+                    <td>@value.UsableIPAdresses</td>
+                    <td>@value.Hosts</td>
+                    <td>TBD</td>
+                    <td>TBD;</td>
+                </tr>
+            </tbody>
+        </table>
+    }
+}
+
+
+
+
+
