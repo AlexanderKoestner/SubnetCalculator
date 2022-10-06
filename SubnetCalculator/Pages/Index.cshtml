@@ -22,40 +22,35 @@
     </div>
 </form>
 
+<hr />
 
-<table class="table" border="1" cellpadding="10">
+<table style="width: 70%" border="1" cellpadding="5">
     <tbody>
         <tr>
-            <td>Subnet Adress</td>
-            <td>Subnet Mask</td>
-            <td>Range of Adresses</td>
-            <td>Usable IPs</td>
-            <td>Hosts</td>
-            <td>Divide</td>
-            <td>Join</td>
+            <td style="text-align:center">Subnet Adress</td>
+            <td style="text-align:center">Subnet Mask</td>
+            <td style="text-align:center">Range of Adresses</td>
+            <td style="text-align:center">Usable IPs</td>
+            <td style="text-align:center">Hosts</td>
+            <td style="text-align:center">Divide</td>
+            <td style="text-align:center">Join</td>
         </tr>
+        @{
+            foreach (Subnet value in Model.Subnets)
+            {
+                <tr>
+                    <td style="text-align:center">@value.SubnetID</td>
+                    <td style="text-align:center">@value.SubnetMask</td>
+                    <td style="text-align:center">@value.RangeOfAdresses</td>
+                    <td style="text-align:center">@value.UsableIPAdresses</td>
+                    <td style="text-align:center">@value.Hosts</td>
+                    <td style="text-align:center">TBD</td>
+                    <td style="text-align:center">TBD</td>
+                </tr>
+            }
+        }
     </tbody>
 </table>
-
-@{
-    foreach(Subnet value in Model.Subnets)
-    {
-        <table class="table" border="1" cellpadding="10">
-            <tbody>
-                <tr>
-                    <td>@value.SubnetID</td>
-                    <td>@value.SubnetMask</td>
-                    <td>@value.RangeOfAdresses</td>
-                    <td>@value.UsableIPAdresses</td>
-                    <td>@value.Hosts</td>
-                    <td>TBD</td>
-                    <td>TBD;</td>
-                </tr>
-            </tbody>
-        </table>
-    }
-}
-
 
 
 

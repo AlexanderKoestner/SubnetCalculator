@@ -1,20 +1,32 @@
-﻿using System.Runtime.Intrinsics.Arm;
+﻿using System.Diagnostics.Metrics;
+using System.Runtime.Intrinsics.Arm;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace SubnetCalculator.Pages.Model
 {
     public class Subnet
     {
+        public string? Test { get; set; }
         public string? IpAdress { get; set; }
         public StringBuilder? LastHostIP { get; set; }
         public StringBuilder? SubnetID { get; set; }
+        public StringBuilder? SubnetIDBinary { get; set; }
         public StringBuilder? SubnetMask { get; set; }
         public StringBuilder? RangeOfAdresses { get; set; }
         public StringBuilder? UsableIPAdresses { get; set; }
+        public StringBuilder? Broadcast { get; set; }
         public double Hosts { get; set; }
         public int Suffix { get; set; }
 
+        private List<string>? IpAdressBlocks { get; set; } = new();
+
         private List<StringBuilder> binaryStringsSubnetMask = new();
+
+        private int firstBlock;
+        private int secondBlock;
+        private int thirdBlock;
+        private int fourthBlock;
 
         public Subnet()
         {
@@ -23,6 +35,8 @@ namespace SubnetCalculator.Pages.Model
             RangeOfAdresses = new();
             UsableIPAdresses = new();
             SubnetMask = new();
+            SubnetIDBinary = new();
+            Broadcast = new();
 
             binaryStringsSubnetMask.Add(new StringBuilder());
             binaryStringsSubnetMask.Add(new StringBuilder());
@@ -33,97 +47,153 @@ namespace SubnetCalculator.Pages.Model
         public void CalcAndWriteAll()
         {
             CalcHosts();
-            CalcSubnetIdAndMask();
+            WriteSubnetMask();
+            WriteSubnetID();
+            WriteBroadCast();
             WriteRangeOfAdresses();
             WriteUsableIpAdresses();
+        }
+
+        private int AdressIncrement(int first, int second, int third, int fourth, int count)
+        {
+            if(count == Hosts+1)
+            {
+                firstBlock = first;
+                secondBlock = second;
+                thirdBlock = third;
+                fourthBlock = fourth;
+                return 0;
+            }
+
+            count++;
+
+            if (second == 256)
+            {
+                AdressIncrement(first + 1, 0, third, fourth, count);
+            }
+            else
+            {
+                if (third == 256)
+                {
+                    AdressIncrement(first, second + 1, 0, fourth, count);
+                }
+                else
+                {
+                    if (fourth == 256)
+                    {
+                        AdressIncrement(first, second, third + 1, 0, count);
+                    }
+                    else
+                    {
+                        AdressIncrement(first, second, third, fourth + 1, count);
+                    }
+                }
+            }
+
+            return 0;
+        }
+
+        private void WriteBroadCast()
+        {
+            firstBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[0]);
+            secondBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[1]);
+            thirdBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[2]);
+            fourthBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[3]);
+
+            //AdressIncrement(firstBlock, secondBlock, thirdBlock, fourthBlock, 0);
+
+            for (int i = 0; i < Hosts + 1; i++)
+            {
+                fourthBlock++;
+
+                if (fourthBlock == 256)
+                {
+                    fourthBlock = 0;
+                    thirdBlock++;
+
+                    if (thirdBlock == 256)
+                    {
+                        thirdBlock = 0;
+                        secondBlock++;
+
+                        if (secondBlock == 256)
+                        {
+                            secondBlock = 0;
+                            firstBlock++;
+                        }
+                    }
+                }
+            }
+
+
+
+            Broadcast.Append(Convert.ToString(firstBlock));
+            Broadcast.Append('.');
+            Broadcast.Append(Convert.ToString(secondBlock));
+            Broadcast.Append('.');
+            Broadcast.Append(Convert.ToString(thirdBlock));
+            Broadcast.Append('.');
+            Broadcast.Append(Convert.ToString(fourthBlock));
         }
 
         private void WriteRangeOfAdresses()
         {
             RangeOfAdresses.Append(SubnetID);
 
-            if(Hosts > 1)
+            if(Suffix < 32)
             {
                 RangeOfAdresses.Append(" - ");
-
-                int firstByte = Convert.ToInt32(SubnetID.ToString().Split('.')[0]);
-                int secondByte = Convert.ToInt32(SubnetID.ToString().Split('.')[1]);
-                int thirdByte = Convert.ToInt32(SubnetID.ToString().Split('.')[2]);
-                int fourthByte = Convert.ToInt32(SubnetID.ToString().Split('.')[3]);
-
-                for (int i = 0; i < Hosts; i++)
-                {
-                    fourthByte++;
-
-                    if(fourthByte == 256)
-                    {
-                        fourthByte = 0;
-                        thirdByte++;
-
-                        if(thirdByte == 256)
-                        {
-                            thirdByte = 0;
-                            secondByte++;
-
-                            if(secondByte == 256)
-                            {
-                                secondByte = 0;
-                                firstByte++;
-                            }
-                        }
-                    }
-                }
-
-                LastHostIP.Append(firstByte.ToString() + '.');
-                LastHostIP.Append(secondByte.ToString() + '.');
-                LastHostIP.Append(thirdByte.ToString() + '.');
-                LastHostIP.Append((fourthByte - 1).ToString());
-
-                int broadCast = Convert.ToInt32(LastHostIP.ToString().Last() + 1);
-
-                LastHostIP.Length--;
-
-                RangeOfAdresses.Append(LastHostIP.ToString() + broadCast.ToString());
-
-                LastHostIP.Length++;
+                RangeOfAdresses.Append(Broadcast);
             }
         }
 
         private void WriteUsableIpAdresses()
         {
-            string subnetID = SubnetID.ToString();
+            UsableIPAdresses.Append(SubnetID.ToString().Split('.')[0]);
+            UsableIPAdresses.Append('.');
+            UsableIPAdresses.Append(SubnetID.ToString().Split('.')[1]);
+            UsableIPAdresses.Append('.');
+            UsableIPAdresses.Append(SubnetID.ToString().Split('.')[2]);
+            UsableIPAdresses.Append('.');
+            UsableIPAdresses.Append(Convert.ToString(Convert.ToInt32(SubnetID.ToString().Split('.')[3]) + 1));
 
-            if (Hosts > 1)
+            if (Suffix < 32)
             {
-                int newLastChar = Convert.ToInt32(subnetID.Last()) + 1;
-
-                subnetID = subnetID.Remove(subnetID.Length-1);
-
-                UsableIPAdresses.Append(subnetID);
-                UsableIPAdresses.Append(newLastChar.ToString());
-
                 UsableIPAdresses.Append(" - ");
-
-                UsableIPAdresses.Append(LastHostIP);
-            }
-            else
-            {
-                UsableIPAdresses.Append(subnetID);
+                UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[0]);
+                UsableIPAdresses.Append('.');
+                UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[1]);
+                UsableIPAdresses.Append('.');
+                UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[2]);
+                UsableIPAdresses.Append('.');
+                UsableIPAdresses.Append(Convert.ToString(Convert.ToInt32(Broadcast.ToString().Split('.')[3]) - 1));
             }
         }
 
         private void CalcHosts()
         {
-            Hosts = Math.Pow(2, 32 - Suffix) - 2;
+            int exponent = 32 - Suffix;
+            if(Suffix == 32)
+            {
+                Hosts = 1;
+            }
+            else if(Suffix == 31)
+            {
+                Hosts = 2;
+            }
+            else
+            {
+                Hosts = Math.Pow(2, exponent) - 2;
+            }
         }
 
-        private void CalcSubnetIdAndMask()
+        private void WriteSubnetMask()
         {
             int stringCounter = 0;
 
             binaryStringsSubnetMask[stringCounter].Append('1');
 
-            for (int i = 1; i < 32; i++)
+            for (int i = 2; i < 33; i++)
             {
                 if(i <= Suffix)
                 {
@@ -140,45 +210,53 @@ namespace SubnetCalculator.Pages.Model
                 }
             }
 
-            StringBuilder binaryStringNewSubnetID = new();
-
-            for(int i = 0; i < binaryStringsSubnetMask.Count; i++)
+            for (int i = 0; i < binaryStringsSubnetMask.Count; i++)
             {
-                SubnetMask.Append(Convert.ToString(Convert.ToInt32(binaryStringsSubnetMask[i].ToString()), 10));
-                if (i < binaryStringsSubnetMask.Count - 1)
+                SubnetMask.Append(Convert.ToString(Convert.ToInt32(binaryStringsSubnetMask[i].ToString(), 2)));
+
+                if(i < binaryStringsSubnetMask.Count-1)
                 {
                     SubnetMask.Append('.');
                 }
+            }
 
-                if (binaryStringsSubnetMask[i].Equals(Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[i], 10), 2)))
+            Test = Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[0], 10), 2).PadLeft(8, '0');
+        }
+
+        private void WriteSubnetID()
+        {
+            IpAdressBlocks.Add(new string(Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[0], 10), 2).PadLeft(8, '0')));
+            IpAdressBlocks.Add(new string(Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[1], 10), 2).PadLeft(8, '0')));
+            IpAdressBlocks.Add(new string(Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[2], 10), 2).PadLeft(8, '0')));
+            IpAdressBlocks.Add(new string(Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[3], 10), 2).PadLeft(8, '0')));
+
+            for (int i = 0; i < IpAdressBlocks.Count; i++)
+            {
+                for(int k = 0; k < binaryStringsSubnetMask[i].ToString().Length; k++)
                 {
-                    SubnetID.Append(IpAdress.Split('.')[i]);
-                    if(i < binaryStringsSubnetMask.Count - 1)
+                    if (IpAdressBlocks[i].ToCharArray()[k].Equals('1') && binaryStringsSubnetMask[i].ToString().ToCharArray()[k].Equals('1'))
                     {
-                        SubnetID.Append('.');
+                        SubnetIDBinary.Append('1');
+                    }
+                    else
+                    {
+                        SubnetIDBinary.Append('0');
                     }
                 }
-                else
-                {
-                    foreach(char value in IpAdress.Split('.')[i])
-                    {
-                        if(value.Equals('1') && IpAdress.Split('.')[i].Equals('1'))
-                        {
-                            binaryStringNewSubnetID.Append('1');
-                        }
-                        else
-                        {
-                            binaryStringNewSubnetID.Append('0');
-                        }
-                    }
 
-                    SubnetID.Append(Convert.ToString(Convert.ToInt32(binaryStringNewSubnetID.ToString()), 10));
-                    if (i < binaryStringsSubnetMask.Count - 1)
-                    {
-                        SubnetID.Append('.');
-                    }
+                if(i < IpAdressBlocks.Count-1)
+                {
+                    SubnetIDBinary.Append('.');
                 }
             }
+
+            SubnetID.Append(Convert.ToString(Convert.ToInt32(SubnetIDBinary.ToString().Split('.')[0], 2), 10));
+            SubnetID.Append('.');
+            SubnetID.Append(Convert.ToString(Convert.ToInt32(SubnetIDBinary.ToString().Split('.')[1], 2), 10));
+            SubnetID.Append('.');
+            SubnetID.Append(Convert.ToString(Convert.ToInt32(SubnetIDBinary.ToString().Split('.')[2], 2), 10));
+            SubnetID.Append('.');
+            SubnetID.Append(Convert.ToString(Convert.ToInt32(SubnetIDBinary.ToString().Split('.')[3], 2), 10));
         }
     }
 }
