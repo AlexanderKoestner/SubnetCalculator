@@ -36,9 +36,17 @@ namespace SubnetCalculator.Pages
 
         public string IpAdress { get; set; }
 
+        [BindProperty]
+        public int SubnetCount { get; set; }
+
+        [BindProperty]
+        public int Counter { get; set; }
+
+
+
         public void OnGet()
         {
-
+            SubnetCount = Subnets.Count;
         }
 
         public IActionResult OnPost()
@@ -50,6 +58,7 @@ namespace SubnetCalculator.Pages
                 Subnets[^1].IpAdress = IpAdress;
                 Subnets[^1].Suffix = IpAdressSuffix;
                 Subnets[^1].CalcAndWriteAll();
+                this.SubnetCount = Subnets.Count();
 
                 return Page();
             }

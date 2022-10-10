@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Metrics;
+using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,7 +17,7 @@ namespace SubnetCalculator.Pages.Model
         public StringBuilder? RangeOfAdresses { get; set; }
         public StringBuilder? UsableIPAdresses { get; set; }
         public StringBuilder? Broadcast { get; set; }
-        public double Hosts { get; set; }
+        public int Hosts { get; set; }
         public int Suffix { get; set; }
 
         private List<string>? IpAdressBlocks { get; set; } = new();
@@ -56,7 +57,7 @@ namespace SubnetCalculator.Pages.Model
 
         private int AdressIncrement(int first, int second, int third, int fourth, int count)
         {
-            if(count == Hosts+1)
+            if(count == 0)
             {
                 firstBlock = first;
                 secondBlock = second;
@@ -65,29 +66,28 @@ namespace SubnetCalculator.Pages.Model
                 return 0;
             }
 
-            count++;
-
-            if (second == 256)
+            if(count > 256 * 256 * 256)
             {
-                AdressIncrement(first + 1, 0, third, fourth, count);
+                AdressIncrement(first + (count / 256 / 256 / 256), second, third, fourth, count / 2);
+                return 0;
             }
-            else
+
+            if (count > 256 * 256)
             {
-                if (third == 256)
-                {
-                    AdressIncrement(first, second + 1, 0, fourth, count);
-                }
-                else
-                {
-                    if (fourth == 256)
-                    {
-                        AdressIncrement(first, second, third + 1, 0, count);
-                    }
-                    else
-                    {
-                        AdressIncrement(first, second, third, fourth + 1, count);
-                    }
-                }
+                AdressIncrement(first, second + (count / 256 / 256), third, fourth, count / 256);
+                return 0;
+            }
+
+            if (count > 256)
+            {
+                AdressIncrement(first, second , third + (count / 256), fourth, count % 256);
+                return 0;
+            }
+
+            if (count > 1)
+            {
+                AdressIncrement(first, second, third, fourth + (int)count, 0);
+                return 0;
             }
 
             return 0;
@@ -100,32 +100,12 @@ namespace SubnetCalculator.Pages.Model
             thirdBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[2]);
             fourthBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[3]);
 
-            //AdressIncrement(firstBlock, secondBlock, thirdBlock, fourthBlock, 0);
+            AdressIncrement(firstBlock, secondBlock, thirdBlock, fourthBlock, (Hosts + 1));
 
-            for (int i = 0; i < Hosts + 1; i++)
+            if (Suffix == 31)
             {
-                fourthBlock++;
-
-                if (fourthBlock == 256)
-                {
-                    fourthBlock = 0;
-                    thirdBlock++;
-
-                    if (thirdBlock == 256)
-                    {
-                        thirdBlock = 0;
-                        secondBlock++;
-
-                        if (secondBlock == 256)
-                        {
-                            secondBlock = 0;
-                            firstBlock++;
-                        }
-                    }
-                }
+                fourthBlock -= 2;
             }
-
-
 
             Broadcast.Append(Convert.ToString(firstBlock));
             Broadcast.Append('.');
@@ -142,6 +122,7 @@ namespace SubnetCalculator.Pages.Model
 
             if(Suffix < 32)
             {
+                
                 RangeOfAdresses.Append(" - ");
                 RangeOfAdresses.Append(Broadcast);
             }
@@ -155,18 +136,38 @@ namespace SubnetCalculator.Pages.Model
             UsableIPAdresses.Append('.');
             UsableIPAdresses.Append(SubnetID.ToString().Split('.')[2]);
             UsableIPAdresses.Append('.');
-            UsableIPAdresses.Append(Convert.ToString(Convert.ToInt32(SubnetID.ToString().Split('.')[3]) + 1));
+
 
             if (Suffix < 32)
             {
-                UsableIPAdresses.Append(" - ");
-                UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[0]);
-                UsableIPAdresses.Append('.');
-                UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[1]);
-                UsableIPAdresses.Append('.');
-                UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[2]);
-                UsableIPAdresses.Append('.');
-                UsableIPAdresses.Append(Convert.ToString(Convert.ToInt32(Broadcast.ToString().Split('.')[3]) - 1));
+                if(Suffix == 31)
+                {
+                    UsableIPAdresses.Append(SubnetID.ToString().Split('.')[3]);
+                    UsableIPAdresses.Append(" - ");
+                    UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[0]);
+                    UsableIPAdresses.Append('.');
+                    UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[1]);
+                    UsableIPAdresses.Append('.');
+                    UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[2]);
+                    UsableIPAdresses.Append('.');
+                    UsableIPAdresses.Append(Convert.ToString(Convert.ToInt32(Broadcast.ToString().Split('.')[3])));
+                }
+                else
+                {
+                    UsableIPAdresses.Append(Convert.ToString(Convert.ToInt32(SubnetID.ToString().Split('.')[3]) + 1));
+                    UsableIPAdresses.Append(" - ");
+                    UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[0]);
+                    UsableIPAdresses.Append('.');
+                    UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[1]);
+                    UsableIPAdresses.Append('.');
+                    UsableIPAdresses.Append(Broadcast.ToString().ToString().Split('.')[2]);
+                    UsableIPAdresses.Append('.');
+                    UsableIPAdresses.Append(Convert.ToString(Convert.ToInt32(Broadcast.ToString().Split('.')[3]) - 1));
+                }
+            }
+            else
+            {
+                UsableIPAdresses.Append(SubnetID.ToString().Split('.')[3]);
             }
         }
 
@@ -183,7 +184,7 @@ namespace SubnetCalculator.Pages.Model
             }
             else
             {
-                Hosts = Math.Pow(2, exponent) - 2;
+                Hosts = (int)Math.Pow(2, exponent) - 2;
             }
         }
 

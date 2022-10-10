@@ -3,6 +3,7 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Visual Subnet Calculator";
+    Model.Counter = 0;
 }
 
 <h1>@ViewData["Title"]</h1>
@@ -18,6 +19,7 @@
         <input class="number" type="text" class="form-control" data-val="true" asp-for="IpAdressFourthByte">
         <text>@Model.EmptyStringDash</text>
         <input type="number" asp-for="IpAdressSuffix" data-val="true">
+        <input type="hidden" asp-for="SubnetCount" value="@Model.SubnetCount">
         <button class="btn btn-outline-secondary" type="submit">Create</button>
     </div>
 </form>
@@ -38,13 +40,25 @@
         @{
             foreach (Subnet value in Model.Subnets)
             {
+                Model.Counter++;
                 <tr>
                     <td style="text-align:center">@value.SubnetID</td>
                     <td style="text-align:center">@value.SubnetMask</td>
                     <td style="text-align:center">@value.RangeOfAdresses</td>
                     <td style="text-align:center">@value.UsableIPAdresses</td>
                     <td style="text-align:center">@value.Hosts</td>
-                    <td style="text-align:center">TBD</td>
+                    <td style="text-align:center">
+                        @{
+                            if(value.Hosts == 1)
+                            {
+                                <text>Done</text>
+                            }
+                            else
+                            {
+                                <input type="submit" "btn" value="Divide" asp-asp-page-handler="">
+                            }
+                        }
+                    </td>
                     <td style="text-align:center">TBD</td>
                 </tr>
             }
