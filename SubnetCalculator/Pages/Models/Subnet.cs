@@ -1,10 +1,6 @@
-﻿using System.Diagnostics.Metrics;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics.Arm;
-using System.Security.Cryptography;
-using System.Text;
+﻿using System.Text;
 
-namespace SubnetCalculator.Pages.Model
+namespace SubnetCalculator.Pages.Models
 {
     public class Subnet
     {
@@ -24,10 +20,10 @@ namespace SubnetCalculator.Pages.Model
 
         private List<StringBuilder> binaryStringsSubnetMask = new();
 
-        private int firstBlock;
-        private int secondBlock;
-        private int thirdBlock;
-        private int fourthBlock;
+        public int FirstBlock { get; set; }
+        public int SecondBlock { get; set; }
+        public int ThirdBlock { get; set; }
+        public int FourthBlock { get; set; }
 
         public Subnet()
         {
@@ -59,61 +55,60 @@ namespace SubnetCalculator.Pages.Model
         {
             if(count == 0)
             {
-                firstBlock = first;
-                secondBlock = second;
-                thirdBlock = third;
-                fourthBlock = fourth;
+                FirstBlock = first;
+                SecondBlock = second;
+                ThirdBlock = third;
+                FourthBlock = fourth;
                 return 0;
             }
 
-            if(count > 256 * 256 * 256)
+            if (count <= Math.Pow(2, 8))
             {
-                AdressIncrement(first + (count / 256 / 256 / 256), second, third, fourth, (count / 256 / 256 / 256) * 256 * 256);
+                AdressIncrement(first, second, third, fourth + count, 0);
                 return 0;
             }
 
-            if (count > 256 * 256)
+            if (count <= Math.Pow(2, 16))
             {
-                AdressIncrement(first, second + (count / 256 / 256), third, fourth, count / 256);
+                AdressIncrement(first, second, third + (count / 256), fourth, count % 256);
                 return 0;
             }
 
-            if (count > 256)
+            if (count <= Math.Pow(2, 24))
             {
-                AdressIncrement(first, second , third + (count / 256), fourth, count % 256);
+                AdressIncrement(first, second + (count / 256 / 256), third, fourth, count % (256 * 256));
                 return 0;
             }
 
-            if (count > 1)
+            if (count <= Math.Pow(2, 31))
             {
-                AdressIncrement(first, second, third, fourth + (int)count, 0);
+                AdressIncrement(first + (count / 256 / 256 / 256), second, third, fourth, count % (256 * 256 * 256));
                 return 0;
             }
-
             return 0;
         }
 
         private void WriteBroadCast()
         {
-            firstBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[0]);
-            secondBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[1]);
-            thirdBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[2]);
-            fourthBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[3]);
+            FirstBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[0]);
+            SecondBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[1]);
+            ThirdBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[2]);
+            FourthBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[3]);
 
-            AdressIncrement(firstBlock, secondBlock, thirdBlock, fourthBlock, (Hosts + 1));
+            AdressIncrement(FirstBlock, SecondBlock, ThirdBlock, FourthBlock, Hosts + 1);
 
             if (Suffix == 31)
             {
-                fourthBlock -= 2;
+                FourthBlock -= 2;
             }
 
-            Broadcast.Append(Convert.ToString(firstBlock));
+            Broadcast.Append(Convert.ToString(FirstBlock));
             Broadcast.Append('.');
-            Broadcast.Append(Convert.ToString(secondBlock));
+            Broadcast.Append(Convert.ToString(SecondBlock));
             Broadcast.Append('.');
-            Broadcast.Append(Convert.ToString(thirdBlock));
+            Broadcast.Append(Convert.ToString(ThirdBlock));
             Broadcast.Append('.');
-            Broadcast.Append(Convert.ToString(fourthBlock));
+            Broadcast.Append(Convert.ToString(FourthBlock));
         }
 
         private void WriteRangeOfAdresses()
@@ -220,8 +215,6 @@ namespace SubnetCalculator.Pages.Model
                     SubnetMask.Append('.');
                 }
             }
-
-            Test = Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[0], 10), 2).PadLeft(8, '0');
         }
 
         private void WriteSubnetID()
