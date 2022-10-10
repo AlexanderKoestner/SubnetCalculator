@@ -68,7 +68,7 @@ namespace SubnetCalculator.Pages.Model
 
             if(count > 256 * 256 * 256)
             {
-                AdressIncrement(first + (count / 256 / 256 / 256), second, third, fourth, count / 2);
+                AdressIncrement(first + (count / 256 / 256 / 256), second, third, fourth, (count / 256 / 256 / 256) * 256 * 256);
                 return 0;
             }
 
