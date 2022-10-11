@@ -16,9 +16,9 @@ namespace SubnetCalculator.Pages.Models
         public int Hosts { get; set; }
         public int Suffix { get; set; }
 
-        private List<string>? IpAdressBlocks { get; set; } = new();
+        private List<string>? IpAdressBlocks { get; set; }
 
-        private List<StringBuilder> binaryStringsSubnetMask = new();
+        private List<StringBuilder> BinaryStringsSubnetMask { get; set; }
 
         public int FirstBlock { get; set; }
         public int SecondBlock { get; set; }
@@ -34,11 +34,8 @@ namespace SubnetCalculator.Pages.Models
             SubnetMask = new();
             SubnetIDBinary = new();
             Broadcast = new();
-
-            binaryStringsSubnetMask.Add(new StringBuilder());
-            binaryStringsSubnetMask.Add(new StringBuilder());
-            binaryStringsSubnetMask.Add(new StringBuilder());
-            binaryStringsSubnetMask.Add(new StringBuilder());
+            BinaryStringsSubnetMask = new();
+            IpAdressBlocks = new();
         }
 
         public void CalcAndWriteAll()
@@ -101,6 +98,7 @@ namespace SubnetCalculator.Pages.Models
             {
                 FourthBlock -= 2;
             }
+            Broadcast.Clear();
 
             Broadcast.Append(Convert.ToString(FirstBlock));
             Broadcast.Append('.');
@@ -113,6 +111,7 @@ namespace SubnetCalculator.Pages.Models
 
         private void WriteRangeOfAdresses()
         {
+            RangeOfAdresses.Clear();
             RangeOfAdresses.Append(SubnetID);
 
             if(Suffix < 32)
@@ -125,6 +124,7 @@ namespace SubnetCalculator.Pages.Models
 
         private void WriteUsableIpAdresses()
         {
+            UsableIPAdresses.Clear();
             UsableIPAdresses.Append(SubnetID.ToString().Split('.')[0]);
             UsableIPAdresses.Append('.');
             UsableIPAdresses.Append(SubnetID.ToString().Split('.')[1]);
@@ -185,19 +185,27 @@ namespace SubnetCalculator.Pages.Models
 
         private void WriteSubnetMask()
         {
+            SubnetMask.Clear();
+            BinaryStringsSubnetMask.Clear();
+
+            BinaryStringsSubnetMask.Add(new StringBuilder());
+            BinaryStringsSubnetMask.Add(new StringBuilder());
+            BinaryStringsSubnetMask.Add(new StringBuilder());
+            BinaryStringsSubnetMask.Add(new StringBuilder());
+
             int stringCounter = 0;
 
-            binaryStringsSubnetMask[stringCounter].Append('1');
+            BinaryStringsSubnetMask[stringCounter].Append('1');
 
             for (int i = 2; i < 33; i++)
             {
                 if(i <= Suffix)
                 {
-                    binaryStringsSubnetMask[stringCounter].Append('1');
+                    BinaryStringsSubnetMask[stringCounter].Append('1');
                 }
                 else
                 {
-                    binaryStringsSubnetMask[stringCounter].Append('0');
+                    BinaryStringsSubnetMask[stringCounter].Append('0');
                 }
 
                 if(i % 8 == 0)
@@ -206,11 +214,11 @@ namespace SubnetCalculator.Pages.Models
                 }
             }
 
-            for (int i = 0; i < binaryStringsSubnetMask.Count; i++)
+            for (int i = 0; i < BinaryStringsSubnetMask.Count; i++)
             {
-                SubnetMask.Append(Convert.ToString(Convert.ToInt32(binaryStringsSubnetMask[i].ToString(), 2)));
+                SubnetMask.Append(Convert.ToString(Convert.ToInt32(BinaryStringsSubnetMask[i].ToString(), 2)));
 
-                if(i < binaryStringsSubnetMask.Count-1)
+                if(i < BinaryStringsSubnetMask.Count-1)
                 {
                     SubnetMask.Append('.');
                 }
@@ -219,6 +227,8 @@ namespace SubnetCalculator.Pages.Models
 
         private void WriteSubnetID()
         {
+            SubnetID.Clear();
+            IpAdressBlocks.Clear();
             IpAdressBlocks.Add(new string(Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[0], 10), 2).PadLeft(8, '0')));
             IpAdressBlocks.Add(new string(Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[1], 10), 2).PadLeft(8, '0')));
             IpAdressBlocks.Add(new string(Convert.ToString(Convert.ToInt32(IpAdress.Split('.')[2], 10), 2).PadLeft(8, '0')));
@@ -226,9 +236,9 @@ namespace SubnetCalculator.Pages.Models
 
             for (int i = 0; i < IpAdressBlocks.Count; i++)
             {
-                for(int k = 0; k < binaryStringsSubnetMask[i].ToString().Length; k++)
+                for(int k = 0; k < BinaryStringsSubnetMask[i].ToString().Length; k++)
                 {
-                    if (IpAdressBlocks[i].ToCharArray()[k].Equals('1') && binaryStringsSubnetMask[i].ToString().ToCharArray()[k].Equals('1'))
+                    if (IpAdressBlocks[i].ToCharArray()[k].Equals('1') && BinaryStringsSubnetMask[i].ToString().ToCharArray()[k].Equals('1'))
                     {
                         SubnetIDBinary.Append('1');
                     }

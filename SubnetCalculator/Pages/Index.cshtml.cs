@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Newtonsoft.Json;
 using SubnetCalculator.Pages.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
@@ -30,14 +31,11 @@ namespace SubnetCalculator.Pages
         [BindProperty, Range(1, 32)]
         public int IpAdressSuffix { get; set; }
 
+        [BindProperty]
         public List<Subnet>? Subnets { get; set; }
 
-        public List<Subnet>? OldSubnets { get; set; }
-
-        public string? EmptyStringDot { get; set; } = " . ";
-        public string? EmptyStringDash { get; set; } = " / ";
-
-        public string? IpAdress { get; set; }
+        [BindProperty]
+        public string? JsonString { get; set; }
 
         [BindProperty]
         public int Counter { get; set; }
@@ -45,13 +43,15 @@ namespace SubnetCalculator.Pages
         [BindProperty]
         public int Index { get; set; }
 
-        public void OnGet(List<Subnet> Subnets)
+        public string? IpAdress { get; set; }
+        public string? EmptyStringDot { get; set; } = " . ";
+        public string? EmptyStringDash { get; set; } = " / ";
+
+        public void OnGet()
         {
-            if(Subnets != null)
-            {
-                OldSubnets = Subnets;
-            }
         }
+
+        // Creates the first Subnet based on the typed in IP Adress
 
         public IActionResult OnPost()
         {
@@ -64,9 +64,8 @@ namespace SubnetCalculator.Pages
                 Subnets[^1].Suffix = IpAdressSuffix;
                 Subnets[^1].CalcAndWriteAll();
 
-                Counter = 0;
-
-                return RedirectToPage("Index");
+                JsonString = JsonConvert.SerializeObject(Subnets, Formatting.Indented);
+                return Page();
             }
             else
             {
@@ -74,22 +73,81 @@ namespace SubnetCalculator.Pages
             }
         }
 
-        public IActionResult OnPostButton_One(IFormCollection Data)
+        // Retrieves a Json String from Post containing the List Subnets from the Last Post and deserializes into a Subnet List and
+        // retrieves the Index from Post of the Subnet that needs to be divided. Then divides the Subnet into two smaller Subnets and
+        // removes the divided Subnet and serializes the changed Subnet List into a Json String
+
+        public IActionResult OnPostButton_Divide()
         {
-            OldSubnets.Insert(Index, new Subnet());
-            OldSubnets[Index].IpAdress = GetNewIpAdress(OldSubnets[Index - 1].Broadcast.ToString());
-            OldSubnets[Index].Suffix = Subnets[Index - 1].Suffix;
-            OldSubnets[Index].CalcAndWriteAll();
+            Subnets = JsonConvert.DeserializeObject<List<Subnet>>(JsonString);
+            Subnets.Insert(Index, new Subnet());
+            Subnets[Index].IpAdress = Subnets[Index + 1].IpAdress;
 
-            OldSubnets.Insert(Index + 1, new Subnet());
-            OldSubnets[Index].IpAdress = GetNewIpAdress(OldSubnets[Index].Broadcast.ToString());
-            OldSubnets[Index].Suffix = Subnets[Index - 1].Suffix;
-            OldSubnets[Index].CalcAndWriteAll();
+            if(Subnets[Index + 1].Suffix > 31)
+            {
+                Subnets[Index].Suffix = Subnets[Index + 1].Suffix;
+            }
+            else
+            {
+                Subnets[Index].Suffix = Subnets[Index + 1].Suffix + 1;
+            }
 
-            OldSubnets.RemoveAt(Index - 1);
-            Counter = 0;
+            Subnets[Index].CalcAndWriteAll();
 
-            return RedirectToPage("Index", new { OldSubnets = this.OldSubnets });
+            Subnets.Insert(Index + 1, new Subnet());
+
+            if (Subnets[Index].Suffix > 31)
+            {
+                Subnets[Index + 1].IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
+            }
+            else
+            {
+                Subnets[Index + 1].IpAdress = GetNewIpAdress(Subnets[Index].Broadcast.ToString());
+            }
+
+            Subnets[Index + 1].Suffix = Subnets[Index].Suffix;
+            Subnets[Index + 1].CalcAndWriteAll();
+
+            Subnets.RemoveAt(Index + 2);
+
+            JsonString = JsonConvert.SerializeObject(Subnets, Formatting.Indented);
+
+            return Page();
+        }
+
+        // Retrieves a Json String from Post containing the List Subnets from the Last Post and deserializes into a Subnet List and
+        // retrieves the Index from Post of the Subnet that needs to be joined.
+
+        public IActionResult OnPostButton_Join()
+        {
+            Subnets = JsonConvert.DeserializeObject<List<Subnet>>(JsonString);
+            Subnets.Insert(Index + 1, new Subnet());
+            Subnets[Index + 1].IpAdress = Subnets[0].SubnetID.ToString();
+            if(Index == Subnets.Count - 2)
+            {
+                Subnets[Index + 1].Suffix = IpAdressSuffix;
+            }
+            else
+            {
+                Subnets[Index + 1].Suffix = Subnets[Index + 2].Suffix;
+            }
+            Subnets[Index + 1].CalcAndWriteAll();
+
+            int subnetCount = Subnets.Count;
+
+            for (int i = 0; i < subnetCount; i++)
+            {
+                if(i == Index + 1)
+                {
+                    break;
+                }
+
+                Subnets.RemoveAt(0);
+            }
+
+            JsonString = JsonConvert.SerializeObject(Subnets, Formatting.Indented);
+
+            return Page();
         }
 
         // Takes Broadcast Adress From previous Subnet Object and returns the next Subnet ID
