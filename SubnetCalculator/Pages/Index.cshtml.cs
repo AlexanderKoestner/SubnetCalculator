@@ -30,42 +30,43 @@ namespace SubnetCalculator.Pages
         [BindProperty, Range(1, 32)]
         public int IpAdressSuffix { get; set; }
 
-        public List<Subnet> Subnets { get; set; } = new();
+        public List<Subnet>? Subnets { get; set; }
 
-        public string EmptyStringDot { get; set; } = " . ";
-        public string EmptyStringDash { get; set; } = " / ";
+        public List<Subnet>? OldSubnets { get; set; }
 
-        public string IpAdress { get; set; }
+        public string? EmptyStringDot { get; set; } = " . ";
+        public string? EmptyStringDash { get; set; } = " / ";
 
-        public StringBuilder Adress { get; set; } = new();
-
-        [BindProperty]
-        public int SubnetCount { get; set; }
+        public string? IpAdress { get; set; }
 
         [BindProperty]
         public int Counter { get; set; }
 
         [BindProperty]
-        public ButtonList Buttons { get; set; }
+        public int Index { get; set; }
 
-        public void OnGet()
+        public void OnGet(List<Subnet> Subnets)
         {
-            Buttons = new();
-            SubnetCount = Subnets.Count;
+            if(Subnets != null)
+            {
+                OldSubnets = Subnets;
+            }
         }
 
         public IActionResult OnPost()
         {
             if (ModelState.IsValid)
             {
+                Subnets = new();
                 IpAdress = IpAdressFirstByte.ToString() + "." + IpAdressSecondByte.ToString() + "." + IpAdressThirdByte.ToString() + "." + IpAdressFourthByte.ToString();
                 Subnets.Add(new Subnet());
                 Subnets[^1].IpAdress = IpAdress;
                 Subnets[^1].Suffix = IpAdressSuffix;
                 Subnets[^1].CalcAndWriteAll();
-                this.SubnetCount = Subnets.Count();
 
-                return Page();
+                Counter = 0;
+
+                return RedirectToPage("Index");
             }
             else
             {
@@ -73,188 +74,66 @@ namespace SubnetCalculator.Pages
             }
         }
 
-        public IActionResult OnPostButtonOne()
+        public IActionResult OnPostButton_One(IFormCollection Data)
         {
-            OnPost();
-            Subnets.Add(new Subnet());
+            OldSubnets.Insert(Index, new Subnet());
+            OldSubnets[Index].IpAdress = GetNewIpAdress(OldSubnets[Index - 1].Broadcast.ToString());
+            OldSubnets[Index].Suffix = Subnets[Index - 1].Suffix;
+            OldSubnets[Index].CalcAndWriteAll();
 
-            if (Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[1]) + 1 > 255)
-            {
-                Adress.Append(Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[0]) + 1);
-                Adress.Append('.');
-            }
-            else
-            {
-                Adress.Append(Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[0]));
-                Adress.Append('.');
-            }
+            OldSubnets.Insert(Index + 1, new Subnet());
+            OldSubnets[Index].IpAdress = GetNewIpAdress(OldSubnets[Index].Broadcast.ToString());
+            OldSubnets[Index].Suffix = Subnets[Index - 1].Suffix;
+            OldSubnets[Index].CalcAndWriteAll();
 
-            if (Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[2]) + 1 > 255)
-            {
-                Adress.Append(Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[1]) + 1);
-                Adress.Append('.');
-            }
-            else
-            {
-                Adress.Append(Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[1]));
-                Adress.Append('.');
-            }
+            OldSubnets.RemoveAt(Index - 1);
+            Counter = 0;
 
-            if (Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[3]) + 1 > 255)
-            {
-                Adress.Append(Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[2]) + 1);
-                Adress.Append('.');
-                Adress.Append('0');
-            }
-            else
-            {
-                Adress.Append(Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[2]));
-                Adress.Append('.');
-                Adress.Append(Convert.ToInt32(Subnets[0].Broadcast.ToString().Split('.')[3]) + 1);
-            }
-
-            Subnets[^1].IpAdress = Adress.ToString();
-            Subnets[^1].Suffix = Subnets[0].Suffix + 1;
-            Subnets[^1].CalcAndWriteAll();
-
-            Subnets.Add(new Subnet());
-
-            Adress.Clear();
-
-            if (Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[1]) + 1 > 255)
-            {
-                Adress.Append(Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[0]) + 1);
-                Adress.Append('.');
-            }
-            else
-            {
-                Adress.Append(Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[0]));
-                Adress.Append('.');
-            }
-
-            if (Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[2]) + 1 > 255)
-            {
-                Adress.Append(Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[1]) + 1);
-                Adress.Append('.');
-            }
-            else
-            {
-                Adress.Append(Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[1]));
-                Adress.Append('.');
-            }
-
-            if (Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[3]) + 1 > 255)
-            {
-                Adress.Append(Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[2]) + 1);
-                Adress.Append('.');
-                Adress.Append('0');
-            }
-            else
-            {
-                Adress.Append(Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[2]));
-                Adress.Append('.');
-                Adress.Append(Convert.ToInt32(Subnets[1].Broadcast.ToString().Split('.')[3]) + 1);
-            }
-
-            Subnets[^1].IpAdress = Adress.ToString();
-            Subnets[^1].Suffix = Subnets[0].Suffix + 1;
-            Subnets[^1].CalcAndWriteAll();
-            this.SubnetCount = Subnets.Count();
-
-            return Page();
+            return RedirectToPage("Index", new { OldSubnets = this.OldSubnets });
         }
 
-        public IActionResult OnPostButtonTwo()
+        // Takes Broadcast Adress From previous Subnet Object and returns the next Subnet ID
+
+        private string GetNewIpAdress(string broadCastFromIndex)
         {
-            OnPost();
-            OnPostButtonOne();
+            StringBuilder adress = new();
 
-            Adress.Clear();
-
-            if (Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[1]) + 1 > 255)
+            if (Convert.ToInt32(broadCastFromIndex.Split('.')[1]) + 1 > 255)
             {
-                Adress.Append(Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[0]) + 1);
-                Adress.Append('.');
+                adress.Append(Convert.ToInt32(broadCastFromIndex.Split('.')[0]) + 1);
+                adress.Append('.');
             }
             else
             {
-                Adress.Append(Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[0]));
-                Adress.Append('.');
+                adress.Append(Convert.ToInt32(broadCastFromIndex.Split('.')[0]));
+                adress.Append('.');
             }
 
-            if (Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[2]) + 1 > 255)
+            if (Convert.ToInt32(broadCastFromIndex.Split('.')[2]) + 1 > 255)
             {
-                Adress.Append(Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[1]) + 1);
-                Adress.Append('.');
+                adress.Append(Convert.ToInt32(broadCastFromIndex.Split('.')[1]) + 1);
+                adress.Append('.');
             }
             else
             {
-                Adress.Append(Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[1]));
-                Adress.Append('.');
+                adress.Append(Convert.ToInt32(broadCastFromIndex.Split('.')[1]));
+                adress.Append('.');
             }
 
-            if (Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[3]) + 1 > 255)
+            if (Convert.ToInt32(broadCastFromIndex.Split('.')[3]) + 1 > 255)
             {
-                Adress.Append(Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[2]) + 1);
-                Adress.Append('.');
-                Adress.Append('0');
+                adress.Append(Convert.ToInt32(broadCastFromIndex.ToString().Split('.')[2]) + 1);
+                adress.Append('.');
+                adress.Append('0');
             }
             else
             {
-                Adress.Append(Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[2]));
-                Adress.Append('.');
-                Adress.Append(Convert.ToInt32(Subnets[2].Broadcast.ToString().Split('.')[3]) + 1);
+                adress.Append(Convert.ToInt32(broadCastFromIndex.ToString().Split('.')[2]));
+                adress.Append('.');
+                adress.Append(Convert.ToInt32(broadCastFromIndex.ToString().Split('.')[3]) + 1);
             }
 
-            Subnets[^1].IpAdress = Adress.ToString();
-            Subnets[^1].Suffix = Subnets[1].Suffix + 1;
-            Subnets[^1].CalcAndWriteAll();
-
-            Subnets.Add(new Subnet());
-
-            Adress.Clear();
-
-            if (Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[1]) + 1 > 255)
-            {
-                Adress.Append(Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[0]) + 1);
-                Adress.Append('.');
-            }
-            else
-            {
-                Adress.Append(Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[0]));
-                Adress.Append('.');
-            }
-
-            if (Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[2]) + 1 > 255)
-            {
-                Adress.Append(Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[1]) + 1);
-                Adress.Append('.');
-            }
-            else
-            {
-                Adress.Append(Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[1]));
-                Adress.Append('.');
-            }
-
-            if (Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[3]) + 1 > 255)
-            {
-                Adress.Append(Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[2]) + 1);
-                Adress.Append('.');
-                Adress.Append('0');
-            }
-            else
-            {
-                Adress.Append(Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[2]));
-                Adress.Append('.');
-                Adress.Append(Convert.ToInt32(Subnets[3].Broadcast.ToString().Split('.')[3]) + 1);
-            }
-
-            Subnets[^1].IpAdress = Adress.ToString();
-            Subnets[^1].Suffix = Subnets[1].Suffix + 1;
-            Subnets[^1].CalcAndWriteAll();
-            this.SubnetCount = Subnets.Count();
-
-            return Page();
+            return adress.ToString();
         }
     }
 }
