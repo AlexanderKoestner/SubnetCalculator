@@ -43,10 +43,7 @@ namespace SubnetCalculator.Pages
         public string? JsonString { get; set; }
 
         [BindProperty]
-        public int CounterY { get; set; }
-
-        [BindProperty]
-        public int CounterX { get; set; }
+        public int Counter { get; set; }
 
         [BindProperty]
         public int Index { get; set; }
@@ -204,15 +201,6 @@ namespace SubnetCalculator.Pages
 
             Subnets[Index + 1].IpAdress = Subnets[0].SubnetID.ToString();
 
-            //if (Index == 1)
-            //{
-            //    Subnets[Index].IpAdress = Subnets[Index - 1].SubnetID.ToString();
-            //}
-            //else
-            //{
-            //    Subnets[Index].IpAdress = Subnets[Index - 1].Broadcast.ToString();
-            //}
-
             // Checks if the Index equals the last Item in the List
             // If true: Takes IP Adress Suffix from first Input
             // If false: Takes IP Adress Suffix from second List item after Index
@@ -223,13 +211,13 @@ namespace SubnetCalculator.Pages
             }
             else
             {
-                Subnets[Index + 1].Suffix = Subnets[Index + 2].Suffix;
+                Subnets[Index + 1].Suffix = Subnets[Index + 2].Suffix - 1;
             }
 
             // Calculates and writes the new Subnet Propoerties for List item after Index
             // See Subnet.cs in Folder Models for more Information
 
-            Subnets[Index].CalcAndWriteAll();
+            Subnets[Index + 1].CalcAndWriteAll();
 
             int subnetCount = Subnets.Count;
 
