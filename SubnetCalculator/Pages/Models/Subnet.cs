@@ -1,10 +1,10 @@
-﻿using System.Text;
+﻿using Newtonsoft.Json;
+using System.Text;
 
 namespace SubnetCalculator.Pages.Models
 {
     public class Subnet
     {
-        public string? Test { get; set; }
         public string? IpAdress { get; set; }
         public StringBuilder? LastHostIP { get; set; }
         public StringBuilder? SubnetID { get; set; }
@@ -48,6 +48,8 @@ namespace SubnetCalculator.Pages.Models
             WriteUsableIpAdresses();
         }
 
+        // Increments the Subnet ID by the number of Hosts generate a Broadcast ID
+
         private int AdressIncrement(int first, int second, int third, int fourth, int count)
         {
             if(count == 0)
@@ -85,6 +87,8 @@ namespace SubnetCalculator.Pages.Models
             return 0;
         }
 
+        // Writes the Broadcast String
+
         private void WriteBroadCast()
         {
             FirstBlock = Convert.ToInt32(SubnetID.ToString().Split('.')[0]);
@@ -109,6 +113,8 @@ namespace SubnetCalculator.Pages.Models
             Broadcast.Append(Convert.ToString(FourthBlock));
         }
 
+        // Writes the Range Of Adresses String
+
         private void WriteRangeOfAdresses()
         {
             RangeOfAdresses.Clear();
@@ -121,6 +127,8 @@ namespace SubnetCalculator.Pages.Models
                 RangeOfAdresses.Append(Broadcast);
             }
         }
+
+        // Writes the usable IP Adresses String
 
         private void WriteUsableIpAdresses()
         {
@@ -166,9 +174,12 @@ namespace SubnetCalculator.Pages.Models
             }
         }
 
+        // Calculates the number of usable Hosts depending on the Suffix Input
+
         private void CalcHosts()
         {
             int exponent = 32 - Suffix;
+
             if(Suffix == 32)
             {
                 Hosts = 1;
@@ -182,6 +193,8 @@ namespace SubnetCalculator.Pages.Models
                 Hosts = (int)Math.Pow(2, exponent) - 2;
             }
         }
+
+        // Writes the Subnet Mask depending on the Suffix Input
 
         private void WriteSubnetMask()
         {
