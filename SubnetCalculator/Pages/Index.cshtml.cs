@@ -5,6 +5,7 @@ using SubnetCalculator.Pages.Models;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.Metrics;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 
 namespace SubnetCalculator.Pages
@@ -21,7 +22,7 @@ namespace SubnetCalculator.Pages
         // Properties to pass to page and retrive from Post via Modelbinding.
         // Also validates Input for IP Adress
 
-        [BindProperty, Range(1, 255)]
+        [BindProperty, Range(0, 255)]
         public int IpAdressFirstByte { get; set; }
 
         [BindProperty, Range(0, 255)]
@@ -48,11 +49,12 @@ namespace SubnetCalculator.Pages
         [BindProperty]
         public int Index { get; set; }
 
-
-        Subnet newSubnet;
         public string? IpAdress { get; set; }
         public string? EmptyStringDot { get; set; } = " . ";
         public string? EmptyStringDash { get; set; } = " / ";
+
+        private Join joinSubnets;
+
 
         public void OnGet()
         {
@@ -185,259 +187,230 @@ namespace SubnetCalculator.Pages
             return Page();
         }
 
-        //
-        //
-        //
-
-        public int ForwardJoiner(int newIndex)
-        {
-            if (newIndex == Index + 1)
-            {
-                return 0;
-            }
-
-            newSubnet = new();
-            newSubnet.IpAdress = GetNewIpAdress(Subnets[newIndex - 1].SubnetID.ToString());
-            newSubnet.Suffix = Subnets[newIndex].Suffix - 1;
-            newSubnet.CalcAndWriteAll();
-
-            Subnets.RemoveRange(newIndex - 1, Index);
-
-            Subnets.Insert(newIndex - 1, newSubnet);
-
-            //Index--;
-
-            //ForwardJoiner(newIndex);
-
-            return 2;
-        }
-
         // Retrieves a Json String from Post containing the List Subnets from the Last Post and deserializes into a Subnet List and
         // retrieves the Index from Post of the Subnet that needs to be joined. Then removes all Subnets that have been joined from the List
         // and serializes the List back in to a Json String
 
         public IActionResult OnPostButton_Join()
         {
-            int subnetCount = 0;
-            int indexToJoin = 0;
-
             // Creates List of Subnets by deserializing Json String
 
             Subnets = JsonConvert.DeserializeObject<List<Subnet>>(JsonString);
 
-            // Create new Subnet
+            // Create new Join Class
+            // See Join.cs in Folder Models for more Information
 
-            newSubnet = new();
+            joinSubnets = new(IpAdressSuffix, Index, IpAdress, Subnets);
 
-            // Check if Index equals last Item in List
-            // If true:
-            // if false:
+            //// Check if Index equals last Item in List
+            //// If true:
+            //// if false:
 
-            if(Subnets.Count - 1 == Index)
-            {
-                // Check if Subnet before Index Suffix equals Index Suffix
-                // If true: Choose Subnet before Index to Join
-                // If false: Join
+            //if(Subnets.Count - 1 == Index)
+            //{
+            //    // Check if Subnet before Index Suffix equals Index Suffix
+            //    // If true: Choose Subnet before Index to Join
+            //    // If false: Join
 
-                if (Subnets[Index - 1].Suffix == Subnets[Index].Suffix)
-                {
-                    newSubnet.IpAdress = Subnets[Index-1].IpAdress;
-                    newSubnet.Suffix = Subnets[Index-1].Suffix - 1;
-                    newSubnet.CalcAndWriteAll();
+            //    if (Subnets[Index - 1].Suffix == Subnets[Index].Suffix)
+            //    {
+            //        newSubnet.IpAdress = Subnets[Index-1].IpAdress;
+            //        newSubnet.Suffix = Subnets[Index-1].Suffix - 1;
+            //        newSubnet.CalcAndWriteAll();
 
-                    Subnets.RemoveRange(Index - 1, 2);
-                    Subnets.Add(newSubnet);
-                }
-                else
-                {
-                    indexToJoin = 0;
+            //        Subnets.RemoveRange(Index - 1, 2);
+            //        Subnets.Add(newSubnet);
+            //    }
+            //    else
+            //    {
+            //        indexToJoin = 0;
 
-                    for (int i = Index; i >= 0; i--)
-                    {
-                        if (Subnets[i].Suffix == Subnets[Index].Suffix - 1)
-                        {
-                            newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
-                            newSubnet.Suffix = Subnets[i].Suffix;
-                            newSubnet.CalcAndWriteAll();
+            //        for (int i = Index; i >= 0; i--)
+            //        {
+            //            if (Subnets[i].Suffix == Subnets[Index].Suffix - 1)
+            //            {
+            //                newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
+            //                newSubnet.Suffix = Subnets[i].Suffix;
+            //                newSubnet.CalcAndWriteAll();
 
-                            Subnets.RemoveRange(i + 1, indexToJoin);
-                            Subnets.Add(newSubnet);
-                            break;
-                        }
+            //                Subnets.RemoveRange(i + 1, indexToJoin);
+            //                Subnets.Add(newSubnet);
+            //                break;
+            //            }
 
-                        if (Subnets[i].Suffix == Subnets[Index].Suffix && i != Index)
-                        {
-                            newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
-                            newSubnet.Suffix = Subnets[i].Suffix - 1;
-                            newSubnet.CalcAndWriteAll();
+            //            if (Subnets[i].Suffix == Subnets[Index].Suffix && i != Index)
+            //            {
+            //                newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
+            //                newSubnet.Suffix = Subnets[i].Suffix - 1;
+            //                newSubnet.CalcAndWriteAll();
 
-                            Subnets.RemoveRange(i + 1, indexToJoin);
-                            Subnets.Add(newSubnet);
-                            break;
-                        }
+            //                Subnets.RemoveRange(i + 1, indexToJoin);
+            //                Subnets.Add(newSubnet);
+            //                break;
+            //            }
 
-                        indexToJoin++;
+            //            indexToJoin++;
 
-                        if (i == 0)
-                        {
-                            newSubnet.IpAdress = Subnets[0].SubnetID.ToString();
-                            newSubnet.Suffix = IpAdressSuffix;
-                            newSubnet.CalcAndWriteAll();
+            //            if (i == 0)
+            //            {
+            //                newSubnet.IpAdress = Subnets[0].SubnetID.ToString();
+            //                newSubnet.Suffix = IpAdressSuffix;
+            //                newSubnet.CalcAndWriteAll();
 
-                            Subnets.Clear();
-                            Subnets.Add(newSubnet);
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // Check if Subnet before Index and after Index have the same Suffix then the Index Subnet
-                // If true:
-                // if false:
+            //                Subnets.Clear();
+            //                Subnets.Add(newSubnet);
+            //                break;
+            //            }
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    // Check if Subnet before Index and after Index have the same Suffix then the Index Subnet
+            //    // If true:
+            //    // if false:
 
-                int suffixCounter = 0;
+            //    int suffixCounter = 0;
 
-                if (Subnets[Index - 1].Suffix == Subnets[Index + 1].Suffix && Subnets[Index].Suffix == Subnets[Index + 1].Suffix)
-                {
-                    for(int i = Index + 1; i < Subnets.Count; i++)
-                    {
-                        if (Subnets[i].Suffix != Subnets[Index].Suffix)
-                        {   
-                            break;
-                        }
-                        else
-                        {
-                            suffixCounter++;
-                        }
-                    }
+            //    if (Subnets[Index - 1].Suffix == Subnets[Index + 1].Suffix && Subnets[Index].Suffix == Subnets[Index + 1].Suffix)
+            //    {
+            //        for(int i = Index + 1; i < Subnets.Count; i++)
+            //        {
+            //            if (Subnets[i].Suffix != Subnets[Index].Suffix)
+            //            {   
+            //                break;
+            //            }
+            //            else
+            //            {
+            //                suffixCounter++;
+            //            }
+            //        }
 
-                    if(suffixCounter % 2 == 0)
-                    {
-                        if (Subnets[Index].Suffix != Subnets[Index - 1].Suffix)
-                        {
-                            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
-                            newSubnet.Suffix = Subnets[Index].Suffix - 1;
-                            newSubnet.CalcAndWriteAll();
+            //        if(suffixCounter % 2 == 0)
+            //        {
+            //            if (Subnets[Index].Suffix != Subnets[Index - 1].Suffix)
+            //            {
+            //                newSubnet.IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
+            //                newSubnet.Suffix = Subnets[Index].Suffix - 1;
+            //                newSubnet.CalcAndWriteAll();
 
-                            Subnets.RemoveRange(Index, 2);
+            //                Subnets.RemoveRange(Index, 2);
 
-                            Subnets.Insert(Index, newSubnet);
-                        }
-                        else
-                        {
-                            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index - 1].SubnetID.ToString());
-                            newSubnet.Suffix = Subnets[Index - 1].Suffix - 1;
-                            newSubnet.CalcAndWriteAll();
+            //                Subnets.Insert(Index, newSubnet);
+            //            }
+            //            else
+            //            {
+            //                newSubnet.IpAdress = GetNewIpAdress(Subnets[Index - 1].SubnetID.ToString());
+            //                newSubnet.Suffix = Subnets[Index - 1].Suffix - 1;
+            //                newSubnet.CalcAndWriteAll();
 
-                            Subnets.RemoveRange(Index - 1, 2);
+            //                Subnets.RemoveRange(Index - 1, 2);
 
-                            Subnets.Insert(Index - 1, newSubnet);
-                        }
-                    }
-                    else
-                    {
-                        if(Subnets[Index].Suffix != Subnets[Index - 2].Suffix)
-                        {
-                            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index - 1].SubnetID.ToString());
-                            newSubnet.Suffix = Subnets[Index - 1].Suffix - 1;
-                            newSubnet.CalcAndWriteAll();
+            //                Subnets.Insert(Index - 1, newSubnet);
+            //            }
+            //        }
+            //        else
+            //        {
+            //            if(Subnets[Index].Suffix != Subnets[Index - 2].Suffix)
+            //            {
+            //                newSubnet.IpAdress = GetNewIpAdress(Subnets[Index - 1].SubnetID.ToString());
+            //                newSubnet.Suffix = Subnets[Index - 1].Suffix - 1;
+            //                newSubnet.CalcAndWriteAll();
 
-                            Subnets.RemoveRange(Index - 1, 2);
+            //                Subnets.RemoveRange(Index - 1, 2);
 
-                            Subnets.Insert(Index - 1, newSubnet);
-                        }
-                        else
-                        {
-                            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
-                            newSubnet.Suffix = Subnets[Index].Suffix - 1;
-                            newSubnet.CalcAndWriteAll();
+            //                Subnets.Insert(Index - 1, newSubnet);
+            //            }
+            //            else
+            //            {
+            //                newSubnet.IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
+            //                newSubnet.Suffix = Subnets[Index].Suffix - 1;
+            //                newSubnet.CalcAndWriteAll();
 
-                            Subnets.RemoveRange(Index, 2);
+            //                Subnets.RemoveRange(Index, 2);
 
-                            Subnets.Insert(Index, newSubnet);
-                        }
-                    }
-                }
-                else
-                {
-                    // Check if Subnet before Index Suffix equals Index Suffix or Subnet after Index equals Suffix or if neither equals Suffix
-                    // If before: Choose Subnet before Index to Join
-                    // If after: Choose Subnet after Index to Join
-                    // If neither: 
+            //                Subnets.Insert(Index, newSubnet);
+            //            }
+            //        }
+            //    }
+            //    else
+            //    {
+            //        // Check if Subnet before Index Suffix equals Index Suffix or Subnet after Index equals Suffix or if neither equals Suffix
+            //        // If before: Choose Subnet before Index to Join
+            //        // If after: Choose Subnet after Index to Join
+            //        // If neither: 
 
-                    if (Subnets[Index - 1].Suffix == Subnets[Index].Suffix && Subnets[Index + 1].Suffix != Subnets[Index].Suffix)
-                    {
-                        newSubnet.IpAdress = GetNewIpAdress(Subnets[Index - 1].SubnetID.ToString());
-                        newSubnet.Suffix = Subnets[Index - 1].Suffix - 1;
-                        newSubnet.CalcAndWriteAll();
+            //        if (Subnets[Index - 1].Suffix == Subnets[Index].Suffix && Subnets[Index + 1].Suffix != Subnets[Index].Suffix)
+            //        {
+            //            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index - 1].SubnetID.ToString());
+            //            newSubnet.Suffix = Subnets[Index - 1].Suffix - 1;
+            //            newSubnet.CalcAndWriteAll();
 
-                        Subnets.RemoveRange(Index - 1, 2);
+            //            Subnets.RemoveRange(Index - 1, 2);
 
-                        Subnets.Insert(Index - 1, newSubnet);
-                    }
-                    else if(Subnets[Index + 1].Suffix == Subnets[Index].Suffix && Subnets[Index - 1].Suffix != Subnets[Index].Suffix)
-                    {
-                        newSubnet.IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
-                        newSubnet.Suffix = Subnets[Index].Suffix - 1;
-                        newSubnet.CalcAndWriteAll();
+            //            Subnets.Insert(Index - 1, newSubnet);
+            //        }
+            //        else if(Subnets[Index + 1].Suffix == Subnets[Index].Suffix && Subnets[Index - 1].Suffix != Subnets[Index].Suffix)
+            //        {
+            //            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
+            //            newSubnet.Suffix = Subnets[Index].Suffix - 1;
+            //            newSubnet.CalcAndWriteAll();
 
-                        Subnets.RemoveRange(Index, 2);
+            //            Subnets.RemoveRange(Index, 2);
 
-                        Subnets.Insert(Index, newSubnet);
-                    }
-                    else
-                    {
-                        indexToJoin = 0;
+            //            Subnets.Insert(Index, newSubnet);
+            //        }
+            //        else
+            //        {
+            //            indexToJoin = 0;
 
-                        if (Subnets[Index].Suffix > Subnets[Index - 1].Suffix && Subnets[Index].Suffix < Subnets[Index + 1].Suffix)
-                        {
-                            for (int i = Index; i < Subnets.Count; i++)
-                            {
-                                if (Subnets[i].Suffix == Subnets[Index].Suffix - 1)
-                                {
-                                    newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
-                                    newSubnet.Suffix = Subnets[i].Suffix;
-                                    newSubnet.CalcAndWriteAll();
+            //            if (Subnets[Index].Suffix > Subnets[Index - 1].Suffix && Subnets[Index].Suffix < Subnets[Index + 1].Suffix)
+            //            {
+            //                for (int i = Index; i < Subnets.Count; i++)
+            //                {
+            //                    if (Subnets[i].Suffix == Subnets[Index].Suffix - 1)
+            //                    {
+            //                        newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
+            //                        newSubnet.Suffix = Subnets[i].Suffix;
+            //                        newSubnet.CalcAndWriteAll();
 
-                                    Subnets.RemoveRange(Index, indexToJoin);
-                                    Subnets.Insert(Index, newSubnet);
-                                    break;
-                                }
+            //                        Subnets.RemoveRange(Index, indexToJoin);
+            //                        Subnets.Insert(Index, newSubnet);
+            //                        break;
+            //                    }
 
-                                if (Subnets[i].Suffix == Subnets[Index].Suffix && i != Index)
-                                {
-                                    newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
-                                    newSubnet.Suffix = Subnets[i].Suffix - 1;
-                                    newSubnet.CalcAndWriteAll();
+            //                    if (Subnets[i].Suffix == Subnets[Index].Suffix && i != Index)
+            //                    {
+            //                        newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
+            //                        newSubnet.Suffix = Subnets[i].Suffix - 1;
+            //                        newSubnet.CalcAndWriteAll();
 
-                                    Subnets.RemoveRange(Index, indexToJoin);
-                                    Subnets.Insert(Index, newSubnet);
-                                    break;
-                                }
+            //                        Subnets.RemoveRange(Index, indexToJoin);
+            //                        Subnets.Insert(Index, newSubnet);
+            //                        break;
+            //                    }
 
-                                indexToJoin++;
+            //                    if (i == Subnets.Count - 1)
+            //                    {
+            //                        newSubnet.IpAdress = Subnets[Index].SubnetID.ToString();
+            //                        newSubnet.Suffix = Subnets[Index - 1].Suffix;
+            //                        newSubnet.CalcAndWriteAll();
 
-                                if (i == Subnets.Count - 1)
-                                {
-                                    newSubnet.IpAdress = Subnets[Index].SubnetID.ToString();
-                                    newSubnet.Suffix = Subnets[Index - 1].Suffix;
-                                    newSubnet.CalcAndWriteAll();
+            //                        Subnets.RemoveRange(Index, indexToJoin);
+            //                        Subnets.Add(newSubnet);
+            //                        break;
+            //                    }
 
-                                    Subnets.RemoveRange(Index, indexToJoin);
-                                    Subnets.Add(newSubnet);
-                                    break;
-                                }
-                            }
-                        }
-                        else if(Subnets[Index].Suffix > Subnets[Index + 1].Suffix && Subnets[Index].Suffix < Subnets[Index - 1].Suffix)
-                        {
+            //                    indexToJoin++;
+            //                }
+            //            }
+            //            else if(Subnets[Index].Suffix > Subnets[Index + 1].Suffix && Subnets[Index].Suffix < Subnets[Index - 1].Suffix)
+            //            {
 
-                        }
-                    }
-                }
-            }
+            //            }
+            //        }
+            //    }
+            //}
 
             // Serializes Json String from Subnet List
 

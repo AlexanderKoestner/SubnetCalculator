@@ -18,7 +18,7 @@ namespace SubnetCalculator.Pages.Models
 
         private List<string>? IpAdressBlocks { get; set; }
 
-        private List<StringBuilder> BinaryStringsSubnetMask { get; set; }
+        private List<StringBuilder>? BinaryStringsSubnetMask { get; set; }
 
         public int FirstBlock { get; set; }
         public int SecondBlock { get; set; }
