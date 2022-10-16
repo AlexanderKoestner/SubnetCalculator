@@ -28,7 +28,7 @@
 
 @if (Model.Subnets != null)
 {
-    <table style="width: 77%" border="1" cellpadding="5">
+    <table style="width: 70%; margin-bottom: 60px" border="1" cellpadding="5">
         <tbody>
             <tr>
                 <td style="text-align:center">Subnet Adress</td>
@@ -76,23 +76,17 @@
                 }
                 else
                 {
-                    if(Model.Counter % 2 == 0)
-                    {
-                        <text>Done</text>
-                    }
-                    else
-                    {
-                                <form method="post">
-                                    <input class="number" type="hidden" value="@Model.IpAdressFirstByte" asp-for="IpAdressFirstByte">
-                                    <input class="number" type="hidden" value="@Model.IpAdressSecondByte" asp-for="IpAdressSecondByte">
-                                    <input class="number" type="hidden" value="@Model.IpAdressThirdByte" asp-for="IpAdressThirdByte">
-                                    <input class="number" type="hidden" value="@Model.IpAdressFourthByte" asp-for="IpAdressFourthByte">
-                                    <input class="number" type="hidden" value="@Model.IpAdressSuffix" asp-for="IpAdressSuffix">
-                                    <input type="hidden" value="@Model.JsonString" asp-for="@Model.JsonString" />
-                                    <input type="hidden" value="@Model.Counter" asp-for="@Model.Index" />
-                                    <input type="submit" class="btn btn-primary" value="Join" asp-page-handler="Button_Join" />
-                                </form>
-                    }
+                    <form method="post">
+                        <input class="number" type="hidden" value="@Model.IpAdressFirstByte" asp-for="IpAdressFirstByte">
+                        <input class="number" type="hidden" value="@Model.IpAdressSecondByte" asp-for="IpAdressSecondByte">
+                        <input class="number" type="hidden" value="@Model.IpAdressThirdByte" asp-for="IpAdressThirdByte">
+                        <input class="number" type="hidden" value="@Model.IpAdressFourthByte" asp-for="IpAdressFourthByte">
+                        <input class="number" type="hidden" value="@Model.IpAdressSuffix" asp-for="IpAdressSuffix">
+                        <input type="hidden" value="@Model.JsonString" asp-for="@Model.JsonString" />
+                        <input type="hidden" value="@Model.Counter" asp-for="@Model.Index" />
+                        <input type="submit" class="btn btn-primary" value="Join" asp-page-handler="Button_Join" />
+                    </form>
+                    
                 }
                 </td>
                 </tr>

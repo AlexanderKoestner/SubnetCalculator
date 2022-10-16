@@ -48,6 +48,8 @@ namespace SubnetCalculator.Pages
         [BindProperty]
         public int Index { get; set; }
 
+
+        Subnet newSubnet;
         public string? IpAdress { get; set; }
         public string? EmptyStringDot { get; set; } = " . ";
         public string? EmptyStringDash { get; set; } = " / ";
@@ -183,54 +185,258 @@ namespace SubnetCalculator.Pages
             return Page();
         }
 
+        //
+        //
+        //
+
+        public int ForwardJoiner(int newIndex)
+        {
+            if (newIndex == Index + 1)
+            {
+                return 0;
+            }
+
+            newSubnet = new();
+            newSubnet.IpAdress = GetNewIpAdress(Subnets[newIndex - 1].SubnetID.ToString());
+            newSubnet.Suffix = Subnets[newIndex].Suffix - 1;
+            newSubnet.CalcAndWriteAll();
+
+            Subnets.RemoveRange(newIndex - 1, Index);
+
+            Subnets.Insert(newIndex - 1, newSubnet);
+
+            //Index--;
+
+            //ForwardJoiner(newIndex);
+
+            return 2;
+        }
+
         // Retrieves a Json String from Post containing the List Subnets from the Last Post and deserializes into a Subnet List and
         // retrieves the Index from Post of the Subnet that needs to be joined. Then removes all Subnets that have been joined from the List
         // and serializes the List back in to a Json String
 
         public IActionResult OnPostButton_Join()
         {
+            int subnetCount = 0;
+            int indexToJoin = 0;
+
             // Creates List of Subnets by deserializing Json String
 
             Subnets = JsonConvert.DeserializeObject<List<Subnet>>(JsonString);
 
-            // Inserts new Subnet into List after Index
+            // Create new Subnet
 
-            Subnets.Insert(Index + 1, new Subnet());
+            newSubnet = new();
 
-            // Takes Subnet ID Property from the first Index and passes it to the new Subnet
+            // Check if Index equals last Item in List
+            // If true:
+            // if false:
 
-            Subnets[Index + 1].IpAdress = Subnets[0].SubnetID.ToString();
-
-            // Checks if the Index equals the last Item in the List
-            // If true: Takes IP Adress Suffix from first Input
-            // If false: Takes IP Adress Suffix from second List item after Index
-
-            if (Index == Subnets.Count - 2)
+            if(Subnets.Count - 1 == Index)
             {
-                Subnets[Index + 1].Suffix = IpAdressSuffix;
+                // Check if Subnet before Index Suffix equals Index Suffix
+                // If true: Choose Subnet before Index to Join
+                // If false: Join
+
+                if (Subnets[Index - 1].Suffix == Subnets[Index].Suffix)
+                {
+                    newSubnet.IpAdress = Subnets[Index-1].IpAdress;
+                    newSubnet.Suffix = Subnets[Index-1].Suffix - 1;
+                    newSubnet.CalcAndWriteAll();
+
+                    Subnets.RemoveRange(Index - 1, 2);
+                    Subnets.Add(newSubnet);
+                }
+                else
+                {
+                    indexToJoin = 0;
+
+                    for (int i = Index; i >= 0; i--)
+                    {
+                        if (Subnets[i].Suffix == Subnets[Index].Suffix - 1)
+                        {
+                            newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
+                            newSubnet.Suffix = Subnets[i].Suffix;
+                            newSubnet.CalcAndWriteAll();
+
+                            Subnets.RemoveRange(i + 1, indexToJoin);
+                            Subnets.Add(newSubnet);
+                            break;
+                        }
+
+                        if (Subnets[i].Suffix == Subnets[Index].Suffix && i != Index)
+                        {
+                            newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
+                            newSubnet.Suffix = Subnets[i].Suffix - 1;
+                            newSubnet.CalcAndWriteAll();
+
+                            Subnets.RemoveRange(i + 1, indexToJoin);
+                            Subnets.Add(newSubnet);
+                            break;
+                        }
+
+                        indexToJoin++;
+
+                        if (i == 0)
+                        {
+                            newSubnet.IpAdress = Subnets[0].SubnetID.ToString();
+                            newSubnet.Suffix = IpAdressSuffix;
+                            newSubnet.CalcAndWriteAll();
+
+                            Subnets.Clear();
+                            Subnets.Add(newSubnet);
+                            break;
+                        }
+                    }
+                }
             }
             else
             {
-                Subnets[Index + 1].Suffix = Subnets[Index + 2].Suffix - 1;
-            }
+                // Check if Subnet before Index and after Index have the same Suffix then the Index Subnet
+                // If true:
+                // if false:
 
-            // Calculates and writes the new Subnet Propoerties for List item after Index
-            // See Subnet.cs in Folder Models for more Information
+                int suffixCounter = 0;
 
-            Subnets[Index + 1].CalcAndWriteAll();
-
-            int subnetCount = Subnets.Count;
-
-            // Removes all joined Subnets from List
-
-            for (int i = 0; i < subnetCount; i++)
-            {
-                if (i == Index + 1)
+                if (Subnets[Index - 1].Suffix == Subnets[Index + 1].Suffix && Subnets[Index].Suffix == Subnets[Index + 1].Suffix)
                 {
-                    break;
-                }
+                    for(int i = Index + 1; i < Subnets.Count; i++)
+                    {
+                        if (Subnets[i].Suffix != Subnets[Index].Suffix)
+                        {   
+                            break;
+                        }
+                        else
+                        {
+                            suffixCounter++;
+                        }
+                    }
 
-                Subnets.RemoveAt(0);
+                    if(suffixCounter % 2 == 0)
+                    {
+                        if (Subnets[Index].Suffix != Subnets[Index - 1].Suffix)
+                        {
+                            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
+                            newSubnet.Suffix = Subnets[Index].Suffix - 1;
+                            newSubnet.CalcAndWriteAll();
+
+                            Subnets.RemoveRange(Index, 2);
+
+                            Subnets.Insert(Index, newSubnet);
+                        }
+                        else
+                        {
+                            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index - 1].SubnetID.ToString());
+                            newSubnet.Suffix = Subnets[Index - 1].Suffix - 1;
+                            newSubnet.CalcAndWriteAll();
+
+                            Subnets.RemoveRange(Index - 1, 2);
+
+                            Subnets.Insert(Index - 1, newSubnet);
+                        }
+                    }
+                    else
+                    {
+                        if(Subnets[Index].Suffix != Subnets[Index - 2].Suffix)
+                        {
+                            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index - 1].SubnetID.ToString());
+                            newSubnet.Suffix = Subnets[Index - 1].Suffix - 1;
+                            newSubnet.CalcAndWriteAll();
+
+                            Subnets.RemoveRange(Index - 1, 2);
+
+                            Subnets.Insert(Index - 1, newSubnet);
+                        }
+                        else
+                        {
+                            newSubnet.IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
+                            newSubnet.Suffix = Subnets[Index].Suffix - 1;
+                            newSubnet.CalcAndWriteAll();
+
+                            Subnets.RemoveRange(Index, 2);
+
+                            Subnets.Insert(Index, newSubnet);
+                        }
+                    }
+                }
+                else
+                {
+                    // Check if Subnet before Index Suffix equals Index Suffix or Subnet after Index equals Suffix or if neither equals Suffix
+                    // If before: Choose Subnet before Index to Join
+                    // If after: Choose Subnet after Index to Join
+                    // If neither: 
+
+                    if (Subnets[Index - 1].Suffix == Subnets[Index].Suffix && Subnets[Index + 1].Suffix != Subnets[Index].Suffix)
+                    {
+                        newSubnet.IpAdress = GetNewIpAdress(Subnets[Index - 1].SubnetID.ToString());
+                        newSubnet.Suffix = Subnets[Index - 1].Suffix - 1;
+                        newSubnet.CalcAndWriteAll();
+
+                        Subnets.RemoveRange(Index - 1, 2);
+
+                        Subnets.Insert(Index - 1, newSubnet);
+                    }
+                    else if(Subnets[Index + 1].Suffix == Subnets[Index].Suffix && Subnets[Index - 1].Suffix != Subnets[Index].Suffix)
+                    {
+                        newSubnet.IpAdress = GetNewIpAdress(Subnets[Index].SubnetID.ToString());
+                        newSubnet.Suffix = Subnets[Index].Suffix - 1;
+                        newSubnet.CalcAndWriteAll();
+
+                        Subnets.RemoveRange(Index, 2);
+
+                        Subnets.Insert(Index, newSubnet);
+                    }
+                    else
+                    {
+                        indexToJoin = 0;
+
+                        if (Subnets[Index].Suffix > Subnets[Index - 1].Suffix && Subnets[Index].Suffix < Subnets[Index + 1].Suffix)
+                        {
+                            for (int i = Index; i < Subnets.Count; i++)
+                            {
+                                if (Subnets[i].Suffix == Subnets[Index].Suffix - 1)
+                                {
+                                    newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
+                                    newSubnet.Suffix = Subnets[i].Suffix;
+                                    newSubnet.CalcAndWriteAll();
+
+                                    Subnets.RemoveRange(Index, indexToJoin);
+                                    Subnets.Insert(Index, newSubnet);
+                                    break;
+                                }
+
+                                if (Subnets[i].Suffix == Subnets[Index].Suffix && i != Index)
+                                {
+                                    newSubnet.IpAdress = GetNewIpAdress(Subnets[i].Broadcast.ToString());
+                                    newSubnet.Suffix = Subnets[i].Suffix - 1;
+                                    newSubnet.CalcAndWriteAll();
+
+                                    Subnets.RemoveRange(Index, indexToJoin);
+                                    Subnets.Insert(Index, newSubnet);
+                                    break;
+                                }
+
+                                indexToJoin++;
+
+                                if (i == Subnets.Count - 1)
+                                {
+                                    newSubnet.IpAdress = Subnets[Index].SubnetID.ToString();
+                                    newSubnet.Suffix = Subnets[Index - 1].Suffix;
+                                    newSubnet.CalcAndWriteAll();
+
+                                    Subnets.RemoveRange(Index, indexToJoin);
+                                    Subnets.Add(newSubnet);
+                                    break;
+                                }
+                            }
+                        }
+                        else if(Subnets[Index].Suffix > Subnets[Index + 1].Suffix && Subnets[Index].Suffix < Subnets[Index - 1].Suffix)
+                        {
+
+                        }
+                    }
+                }
             }
 
             // Serializes Json String from Subnet List
