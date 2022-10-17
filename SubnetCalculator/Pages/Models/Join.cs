@@ -46,8 +46,14 @@ namespace SubnetCalculator.Pages.Models
             newSubnet.IpAdress = Subnets[CurrentIndex].SubnetID.ToString();
             newSubnet.CalcAndWriteAll();
 
+            // Check if Subnet to join is at the first Postion in List Subnets
+            // or if Subnet to join is at the last Postion in List Subnets
+            // of if Subnet to join is in between first and last Position in List Subnets
+
             if (CheckPositon() == 0)
-            {
+            {   
+                // Search List Subnets for Range to join
+
                 for(int i = 1; i < Subnets.Count; i++)
                 {
                     if (newSubnet.Broadcast.Equals(Subnets[i].Broadcast))
@@ -60,6 +66,8 @@ namespace SubnetCalculator.Pages.Models
             }
             else if(CheckPositon() == 1)
             {
+                // Search List Subnets for Range to join
+
                 for (int i = CurrentIndex - 1; i >= 0; i--)
                 {
                     if (newSubnet.SubnetID.Equals(Subnets[i].SubnetID))
@@ -80,6 +88,8 @@ namespace SubnetCalculator.Pages.Models
                 bool up = false;
                 bool down = false;
 
+                // Check if Subnet to join is located before or after Current Index
+
                 for(int i = 0; i < Subnets.Count - 1; i++)
                 {
                     if (newSubnet.SubnetID.Equals(Subnets[i].SubnetID) && i != CurrentIndex)
@@ -92,7 +102,10 @@ namespace SubnetCalculator.Pages.Models
                     }
                 }
 
-                if(up)
+                // If true: Search the List upwards for Subnet to join
+                // If false: Search the List downwards for Subnet to join
+
+                if (up)
                 {
                     for (int i = CurrentIndex - 1; i >= 0; i--)
                     {
@@ -102,6 +115,8 @@ namespace SubnetCalculator.Pages.Models
                             newSubnet.Suffix = Subnets[CurrentIndex].Suffix - 1;
                             newSubnet.IpAdress = Subnets[i].SubnetID.ToString();
                             newSubnet.CalcAndWriteAll();
+
+                            // Remove 
 
                             Subnets.RemoveRange(i, CurrentIndex + 1 - i);
                             Subnets.Insert(i, newSubnet);
