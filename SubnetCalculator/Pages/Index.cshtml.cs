@@ -128,7 +128,7 @@ namespace SubnetCalculator.Pages
 
             // Takes IP Adress from List Item after Index and passes it to new Subnet
 
-            Subnets[Index].IpAdress = Subnets[Index + 1].IpAdress;
+            Subnets[Index].IpAdress = Subnets[Index + 1].SubnetID.ToString(); ;
 
             // Checks if Suffix is greater then 31
             // If true: Takes Suffix from List Item after Index passes it to new Subnet

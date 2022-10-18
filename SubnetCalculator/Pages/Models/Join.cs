@@ -54,12 +54,12 @@ namespace SubnetCalculator.Pages.Models
             {   
                 // Search List Subnets for Range to join
 
-                for(int i = 1; i < Subnets.Count; i++)
+                for(int i = 0; i < Subnets.Count; i++)
                 {
                     if (newSubnet.Broadcast.Equals(Subnets[i].Broadcast))
                     {
                         Subnets.RemoveRange(CurrentIndex, i + 1);
-                        Subnets.Insert(0, newSubnet);
+                        Subnets.Insert(CurrentIndex, newSubnet);
                         break;
                     }
                 }
@@ -86,7 +86,6 @@ namespace SubnetCalculator.Pages.Models
             else
             {
                 bool up = false;
-                bool down = false;
 
                 // Check if Subnet to join is located before or after Current Index
 
@@ -116,8 +115,6 @@ namespace SubnetCalculator.Pages.Models
                             newSubnet.IpAdress = Subnets[i].SubnetID.ToString();
                             newSubnet.CalcAndWriteAll();
 
-                            // Remove 
-
                             Subnets.RemoveRange(i, CurrentIndex + 1 - i);
                             Subnets.Insert(i, newSubnet);
                             break;
@@ -126,9 +123,9 @@ namespace SubnetCalculator.Pages.Models
                 }
                 else
                 {
-                    for (int i = CurrentIndex + 1; i < Subnets.Count; i++)
+                    for (int i = CurrentIndex; i < Subnets.Count; i++)
                     {
-                        if (newSubnet.Broadcast.Equals(Subnets[i].Broadcast))
+                        if (newSubnet.Broadcast.Equals(Subnets[i].Broadcast) && i != CurrentIndex)
                         {
                             Subnets.RemoveRange(CurrentIndex, i - CurrentIndex + 1);
                             Subnets.Insert(CurrentIndex, newSubnet);

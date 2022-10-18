@@ -126,13 +126,20 @@ namespace SubnetCalculator.Pages.Models
 
             Broadcast.Clear();
 
-            Broadcast.Append(Convert.ToString(FirstBlock));
-            Broadcast.Append('.');
-            Broadcast.Append(Convert.ToString(SecondBlock));
-            Broadcast.Append('.');
-            Broadcast.Append(Convert.ToString(ThirdBlock));
-            Broadcast.Append('.');
-            Broadcast.Append(Convert.ToString(FourthBlock));
+            if (Suffix == 32)
+            {
+                Broadcast = SubnetID;
+            }
+            else
+            {
+                Broadcast.Append(Convert.ToString(FirstBlock));
+                Broadcast.Append('.');
+                Broadcast.Append(Convert.ToString(SecondBlock));
+                Broadcast.Append('.');
+                Broadcast.Append(Convert.ToString(ThirdBlock));
+                Broadcast.Append('.');
+                Broadcast.Append(Convert.ToString(FourthBlock));
+            }
         }
 
         // Writes the Range Of Adresses String
